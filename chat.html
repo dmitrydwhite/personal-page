@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>DmitryChat</title>
+</head>
+<body>
+	<h1>Dmitry-Chat</h1>
+	<div style="display: flex; flex-direction: column; align-items: center; max-width: 360px; margin-left: auto; margin-right: auto;">
+		<div id="messages-display" style="height: 400px; max-width: 360px; overflow-y: scroll;"></div>
+		<div style="display: flex; justify-content: center;">
+			<span id="chat-id"></span>
+		</div>
+		<div style="display: flex;">
+			<button id="start-chat">Start Chat</button>
+			<button id="end-chat">End Chat</button>
+		</div>
+		<form id="chat-send">
+			<div style="display: flex; justify-content: center;">
+				<textarea disabled id="chat-compose" style="width: 360px; height: 98px;"></textarea>
+			</div>
+			<div style="display: flex; justify-content: flex-end;">
+				<input disabled type="submit" value="Send">
+			</div>
+		</form>
+	</div>
+	<template id="my-message">
+		<div style="display:flex; padding-bottom: 2px; justify-content:flex-end;">
+			<fieldset style="max-width: 280px; border-radius: 4px;">
+				<legend style="font-size: 12px; font-family: Arial, Helvetica, sans-serif">You sent:</legend>
+			</fieldset>
+		</div>
+	</template>
+	<template id="their-message">
+		<div style="display:flex; padding-bottom: 2px; justify-content:flex-start;">
+			<fieldset style="max-width: 280px; border-radius: 4px; background-color: lightblue;">
+				<legend style="font-size: 12px; font-family: Arial, Helvetica, sans-serif; background-color: lightblue; border: 1px solid darkgreen; border-radius: 2px;">They sent:</legend>
+			</fieldset>
+		</div>
+	</template>
+	<script>
+(function() {
+	function getCode (digits = 7) {
+		let code = '';
+
+		[...Array(digits)].forEach(() => {
+			code += `${Math.floor(Math.random() * 10)}`;
+		});
+
+		return `${code.slice(0, 3)}-${code.slice(3)}`;
+	}
+
+	function updateMessagesDisplay () {
+		messages_display.innerHTML = '';
+
+		messages.forEach(({ sender, content }) => {
+			const template = document.getElementById(sender === 'ME' ? 'my-message' : 'their-message');
+			const next = template.content.firstElementChild.cloneNode(true);
+
+			next.querySelector('fieldset').append(content);
+
+			messages_display.append(next);
+		});
+
+		if (incoming_dots) {
+			const next = document.getElementById('their-message').content.firstElementChild.cloneNode(true);
+
+			next.querySelector('fieldset').append('...');
+
+			messages_display.append(next);
+		}
+
+		messages_display.scrollTop = messages_display.scrollHeight;
+	}
+
+	function handleSocketClose() {
+		chat_id_span.innerHTML = '';
+		start_session_button.removeAttribute('disabled');
+		chat_id_span.innerHTML = 'Session closed: Retrying...';
+
+		incoming_message = new EventSource(`https://young-cliffs-72028.herokuapp.com/listener/${listen}`);
+
+		setUpChatInterface();
+		updateMessagesDisplay();
+	}
+
+	function handleSocketMessage (event) {
+		const { type, content } = JSON.parse(event.data);
+
+		if (type === 'JOIN_CHAT') {
+			messages.push({ sender: 'NOTIF', message: type });
+		}
+
+		if (type === 'LEAVE_CHAT') {
+			messages.push({ sender: 'NOTIF', message: type });
+		}
+
+		if (content !== '...' || type === 'DOTS_CLEAR') {
+			incoming_dots = false;
+		}
+
+		if (content === '...') {
+			incoming_dots = true;
+		} else if (content) {
+			messages.push({ sender: 'THEM', content });
+		}
+
+		updateMessagesDisplay();
+	}
+
+	function setUpChatInterface () {
+		let last_input_value = '';
+
+		incoming_message.onmessage = event => handleSocketMessage(event);
+
+		message_send_form.addEventListener('submit', event => {
+			event.preventDefault();
+
+			const content = message_entry.value;
+
+			if (!content) {
+				alert('Something went wrong');
+			} else {
+				fetch(
+					`https://young-cliffs-72028.herokuapp.com/message/${send_id}`,
+					{ method: 'post', headers, body: JSON.stringify({ content }) }
+				);
+
+				messages.push({ sender: 'ME', content });
+				message_entry.value = '';
+				message_entry.focus();
+				message_send_button.setAttribute('disabled', 'disabled');
+				updateMessagesDisplay();
+			}
+		});
+
+		message_entry.addEventListener('input', event => {
+			if (event.target.value) {
+				message_send_button.removeAttribute('disabled');
+			} else {
+				message_send_button.setAttribute('disabled', 'disabled');
+			}
+		});
+
+		message_entry.removeAttribute('disabled');
+
+		setInterval(() => {
+			if (message_entry.value !== last_input_value) {
+				last_input_value = message_entry.value;
+
+				if (!!message_entry.value) {
+					fetch(
+						`https://young-cliffs-72028.herokuapp.com/message/${send_id}`,
+						{ method: 'post', headers, body: JSON.stringify({ content: '...' }) }
+					);
+				} else {
+					fetch(
+						`https://young-cliffs-72028.herokuapp.com/message/${send_id}`,
+						{ method: 'post', headers, body: JSON.stringify({ type: 'DOTS_CLEAR' }) }
+					);
+				}
+			}
+		}, 1000);
+	}
+
+	async function proposeSession (method_str = 'propose') {
+		start_session_button.setAttribute('disabled', 'disabled');
+		chat_id_span.innerHTML = session_id;
+
+		try {
+			const id_response = await fetch(
+				`https://young-cliffs-72028.herokuapp.com/${method_str}/${session_id}::${Date.now()}`,
+				{ method: 'get' }
+			);
+			const { send, listen } = await id_response.json();
+
+			incoming_message = new EventSource(`https://young-cliffs-72028.herokuapp.com/listener/${listen}`);
+			listen_id = listen;
+			send_id = send;
+
+			setUpChatInterface();
+		} catch (err) {
+			chat_id_span.innerHTML = err;
+		}
+	}
+
+	function joinChatSession () {
+		const proposed_session = getCode();
+		const join_session = prompt(`
+Your session identifier is ${proposed_session}
+Press "OK" to start this chat.
+Or enter your friend's code:
+			`.trim());
+
+		session_id = join_session || proposed_session;
+
+		proposeSession(join_session ? 'join' : 'propose');
+	}
+
+	const messages_display = document.getElementById('messages-display');
+	const start_session_button = document.getElementById('start-chat');
+	const end_session_button = document.getElementById('end-chat');
+	const message_entry = document.getElementById('chat-compose');
+	const message_send_form = document.getElementById('chat-send');
+	const message_send_button = message_send_form.querySelector('input[type="submit"]');
+	const chat_id_span = document.getElementById('chat-id');
+
+	const headers = { 'Content-Type': 'application/json' };
+	const messages = [];
+
+	/**
+	 * @type {EventSource}
+	 */
+	let incoming_message;
+	/**
+	 * @type {string}
+	 */
+	let session_id;
+	let send_id;
+	let listen_id;
+	let incoming_dots = false;
+	let session_close_intent = false;
+
+	start_session_button.addEventListener('click', joinChatSession);
+	end_session_button.addEventListener('click', () => {
+		session_close_intent = true;
+		incoming_message.close();
+		messages.splice(0, messages.length);
+		updateMessagesDisplay();
+	});
+})();
+	</script>
+</body>
+</html>
