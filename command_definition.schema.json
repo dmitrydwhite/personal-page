@@ -79,11 +79,11 @@
 							"additionalItems": false
 						},
 						"value": {
-							"description": "An optional constant value that the field must always take",
+							"description": "An optional constant value that the field must always take. Cannot be combined with `default`.",
 							"type": "integer"
 						},
 						"default": {
-							"description": "The default, placeholder, or starting value for a field that can be changed",
+							"description": "The default, placeholder, or starting value for a field that can be changed. Cannot be combined with `value`.",
 							"type": "integer"
 						}
 					},
@@ -149,11 +149,11 @@
 							"additionalItems": false
 						},
 						"value": {
-							"description": "An optional constant value that the field must always take",
+							"description": "An optional constant value that the field must always take. Cannot be combined with `default`.",
 							"type": "number"
 						},
 						"default": {
-							"description": "The default, placeholder, or starting value for a field that can be changed",
+							"description": "The default, placeholder, or starting value for a field that can be changed. Cannot be combined with `value`.",
 							"type": "number"
 						}
 					},
@@ -218,11 +218,11 @@
 							"exclusiveMinimum": 0
 						},
 						"value": {
-							"description": "An optional constant value that the field must always take",
+							"description": "An optional constant value that the field must always take. Cannot be combined with `default`.",
 							"type": "string"
 						},
 						"default": {
-							"description": "The default, placeholder, or starting value for a field that can be changed",
+							"description": "The default, placeholder, or starting value for a field that can be changed. Cannot be combined with `value`.",
 							"type": "string"
 						}
 					},
@@ -271,7 +271,7 @@
 							"const": "boolean"
 						},
 						"value": {
-							"description": "An optional constant value that the field must always take",
+							"description": "An optional constant value that the field must always take. Cannot be combined with `default`.",
 							"oneOf": [
 								{
 									"type": "boolean"
@@ -284,7 +284,7 @@
 							]
 						},
 						"default": {
-							"description": "The default, placeholder, or starting value for a field that can be changed",
+							"description": "The default, placeholder, or starting value for a field that can be changed. Cannot be combined with `value`.",
 							"oneOf": [
 								{
 									"type": "boolean"
@@ -356,11 +356,11 @@
 							"const": "enum"
 						},
 						"value": {
-							"description": "An optional constant value that the field must always take",
+							"description": "An optional constant value that the field must always take. Cannot be combined with `default`.",
 							"type": "string"
 						},
 						"default": {
-							"description": "The default, placeholder, or starting value for a field that can be changed",
+							"description": "The default, placeholder, or starting value for a field that can be changed. Cannot be combined with `value`.",
 							"type": "string"
 						},
 						"enum": {
