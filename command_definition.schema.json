@@ -59,7 +59,7 @@
 				{
 					"properties": {
 						"name": {
-							"$ref": "#/$defs/fieldName",
+							"$ref": "#/$defs/fieldName"
 						},
 						"type": {
 							"const": "integer"
@@ -126,7 +126,7 @@
 				{
 					"properties": {
 						"name": {
-							"$ref": "#/$defs/fieldName",
+							"$ref": "#/$defs/fieldName"
 						},
 						"type": {
 							"enum": [
@@ -196,7 +196,7 @@
 				{
 					"properties": {
 						"name": {
-							"$ref": "#/$defs/fieldName",
+							"$ref": "#/$defs/fieldName"
 						},
 						"type": {
 							"enum": [
@@ -265,7 +265,7 @@
 				{
 					"properties": {
 						"name": {
-							"$ref": "#/$defs/fieldName",
+							"$ref": "#/$defs/fieldName"
 						},
 						"type": {
 							"const": "boolean"
@@ -350,7 +350,7 @@
 				{
 					"properties": {
 						"name": {
-							"$ref": "#/$defs/fieldName",
+							"$ref": "#/$defs/fieldName"
 						},
 						"type": {
 							"const": "enum"
