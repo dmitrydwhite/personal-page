@@ -1,0 +1,387 @@
+{
+	"$schema": "https://json-schema.org/draft/2019-09/schema",
+	"$id": "command_defs.schema.json",
+	"title": "Command Definitions Schema",
+	"description": "",
+	"type": "object",
+	"properties": {
+		"definitions": {
+			"type": "object",
+			"patternProperties": {
+				"^.*$": {
+					"type": "object",
+					"properties": {
+						"display_name": {
+							"type": "string"
+						},
+						"description": {
+							"type": "string"
+						},
+						"fields": {
+							"type": "array",
+							"items": {
+								"$ref": "#/$defs/field"
+							}
+						},
+						"tags": {
+							"type": "array",
+							"items": {
+								"type": "string"
+							}
+						}
+					},
+					"required": [
+						"display_name",
+						"description",
+						"fields"
+					],
+					"additionalProperties": false
+				}
+			}
+		}
+	},
+	"required": [
+		"definitions"
+	],
+	"$defs": {
+		"field": {
+			"type": "object",
+			"oneOf": [
+				{
+					"properties": {
+						"type": {
+							"const": "integer"
+						},
+						"range": {
+							"type": "array",
+							"items": [
+								{
+									"type": "integer"
+								},
+								{
+									"type": "integer"
+								}
+							],
+							"minItems": 2,
+							"additionalItems": false
+						},
+						"value": {
+							"type": "integer"
+						},
+						"default": {
+							"type": "integer"
+						}
+					},
+					"required": [
+						"name",
+						"type"
+					],
+					"anyOf": [
+						{
+							"required": [
+								"value"
+							],
+							"not": {
+								"required": [
+									"default"
+								]
+							}
+						},
+						{
+							"required": [
+								"default"
+							],
+							"not": {
+								"required": [
+									"value"
+								]
+							}
+						},
+						{
+							"required": [],
+							"not": {
+								"required": [
+									"default",
+									"value"
+								]
+							}
+						}
+					]
+				},
+				{
+					"properties": {
+						"type": {
+							"enum": [
+								"number",
+								"float"
+							]
+						},
+						"range": {
+							"type": "array",
+							"items": [
+								{
+									"type": "number"
+								},
+								{
+									"type": "number"
+								}
+							],
+							"minItems": 2,
+							"additionalItems": false
+						},
+						"value": {
+							"type": "number"
+						},
+						"default": {
+							"type": "number"
+						}
+					},
+					"required": [
+						"name",
+						"type"
+					],
+					"anyOf": [
+						{
+							"required": [
+								"value"
+							],
+							"not": {
+								"required": [
+									"default"
+								]
+							}
+						},
+						{
+							"required": [
+								"default"
+							],
+							"not": {
+								"required": [
+									"value"
+								]
+							}
+						},
+						{
+							"required": [],
+							"not": {
+								"required": [
+									"default",
+									"value"
+								]
+							}
+						}
+					]
+				},
+				{
+					"properties": {
+						"name": {
+							"type": "string"
+						},
+						"type": {
+							"enum": [
+								"string",
+								"text"
+							]
+						},
+						"range": {
+							"type": "array",
+							"items": {
+								"type": "string"
+							},
+							"minItems": 1
+						},
+						"characterLimit": {
+							"type": "integer",
+							"exclusiveMinimum": 0
+						},
+						"value": {
+							"type": "string"
+						},
+						"default": {
+							"type": "string"
+						}
+					},
+					"required": [
+						"name",
+						"type"
+					],
+					"anyOf": [
+						{
+							"required": [
+								"value"
+							],
+							"not": {
+								"required": [
+									"default"
+								]
+							}
+						},
+						{
+							"required": [
+								"default"
+							],
+							"not": {
+								"required": [
+									"value"
+								]
+							}
+						},
+						{
+							"required": [],
+							"not": {
+								"required": [
+									"default",
+									"value"
+								]
+							}
+						}
+					]
+				},
+				{
+					"properties": {
+						"name": {
+							"type": "string"
+						},
+						"type": {
+							"const": "boolean"
+						},
+						"value": {
+							"oneOf": [
+								{
+									"type": "boolean"
+								},
+								{
+									"type": "number",
+									"minimum": 0,
+									"maximum": 1
+								}
+							]
+						},
+						"default": {
+							"oneOf": [
+								{
+									"type": "boolean"
+								},
+								{
+									"type": "number",
+									"minimum": 0,
+									"maximum": 1
+								}
+							]
+						},
+						"range": {
+							"type": "array",
+							"items": [
+								{
+									"type": "string"
+								},
+								{
+									"type": "string"
+								}
+							],
+							"additionalItems": false,
+							"minItems": 2
+						}
+					},
+					"required": [
+						"name",
+						"type"
+					],
+					"anyOf": [
+						{
+							"required": [
+								"value"
+							],
+							"not": {
+								"required": [
+									"default"
+								]
+							}
+						},
+						{
+							"required": [
+								"default"
+							],
+							"not": {
+								"required": [
+									"value"
+								]
+							}
+						},
+						{
+							"required": [],
+							"not": {
+								"required": [
+									"default",
+									"value"
+								]
+							}
+						}
+					]
+				},
+				{
+					"properties": {
+						"name": {
+							"type": "string"
+						},
+						"type": {
+							"const": "enum"
+						},
+						"value": {
+							"type": "string"
+						},
+						"default": {
+							"type": "string"
+						},
+						"enum": {
+							"type": "object",
+							"minProperties": 1,
+							"patternProperties": {
+								"^.*$": {
+									"type": "integer"
+								}
+							},
+							"additionalProperties": false
+						}
+					},
+					"required": [
+						"name",
+						"type",
+						"enum"
+					],
+					"anyOf": [
+						{
+							"required": [
+								"value"
+							],
+							"not": {
+								"required": [
+									"default"
+								]
+							}
+						},
+						{
+							"required": [
+								"default"
+							],
+							"not": {
+								"required": [
+									"value"
+								]
+							}
+						},
+						{
+							"required": [],
+							"not": {
+								"required": [
+									"default",
+									"value"
+								]
+							}
+						}
+					]
+				}
+			]
+		}
+	}
+}
