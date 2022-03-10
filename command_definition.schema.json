@@ -11,18 +11,23 @@
 					"type": "object",
 					"properties": {
 						"display_name": {
-							"type": "string"
+							"type": "string",
+							"minLength": 1,
+							"description": "The name of the command to display in Major Tom's UI"
 						},
 						"description": {
-							"type": "string"
+							"type": "string",
+							"description": "A description of what the command does, to show in Major Tom's UI"
 						},
 						"fields": {
+							"description": "An array of zero or more Field Definitions",
 							"type": "array",
 							"items": {
 								"$ref": "#/$defs/field"
 							}
 						},
 						"tags": {
+							"description": "An optional array of zero or more alphanumeric tags under which to group this command in the Major Tom UI",
 							"type": "array",
 							"items": {
 								"type": "string"
@@ -43,15 +48,24 @@
 		"definitions"
 	],
 	"$defs": {
+		"fieldName": {
+			"type": "string",
+			"minLength": 1,
+			"description": "The name of the field"
+		},
 		"field": {
 			"type": "object",
 			"oneOf": [
 				{
 					"properties": {
+						"name": {
+							"$ref": "#/$defs/fieldName",
+						},
 						"type": {
 							"const": "integer"
 						},
 						"range": {
+							"description": "An array of exactly two elements defining the field's valid numeric range, inclusive of the limits. (Ex: 0,1,2 are valid with a range of [0,2] )",
 							"type": "array",
 							"items": [
 								{
@@ -65,9 +79,11 @@
 							"additionalItems": false
 						},
 						"value": {
+							"description": "An optional constant value that the field must always take",
 							"type": "integer"
 						},
 						"default": {
+							"description": "The default, placeholder, or starting value for a field that can be changed",
 							"type": "integer"
 						}
 					},
@@ -109,6 +125,9 @@
 				},
 				{
 					"properties": {
+						"name": {
+							"$ref": "#/$defs/fieldName",
+						},
 						"type": {
 							"enum": [
 								"number",
@@ -116,6 +135,7 @@
 							]
 						},
 						"range": {
+							"description": "An array of exactly two elements defining the field's valid numeric range, inclusive of the limits. (Ex: 0,1,2 are valid with a range of [0,2] )",
 							"type": "array",
 							"items": [
 								{
@@ -129,9 +149,11 @@
 							"additionalItems": false
 						},
 						"value": {
+							"description": "An optional constant value that the field must always take",
 							"type": "number"
 						},
 						"default": {
+							"description": "The default, placeholder, or starting value for a field that can be changed",
 							"type": "number"
 						}
 					},
@@ -174,7 +196,7 @@
 				{
 					"properties": {
 						"name": {
-							"type": "string"
+							"$ref": "#/$defs/fieldName",
 						},
 						"type": {
 							"enum": [
@@ -183,6 +205,7 @@
 							]
 						},
 						"range": {
+							"description": "An array of one or more elements to populate a select field of valid string values for the field",
 							"type": "array",
 							"items": {
 								"type": "string"
@@ -190,13 +213,16 @@
 							"minItems": 1
 						},
 						"characterLimit": {
+							"description": "An optional integer indicating the character limit for a string or text field",
 							"type": "integer",
 							"exclusiveMinimum": 0
 						},
 						"value": {
+							"description": "An optional constant value that the field must always take",
 							"type": "string"
 						},
 						"default": {
+							"description": "The default, placeholder, or starting value for a field that can be changed",
 							"type": "string"
 						}
 					},
@@ -239,12 +265,13 @@
 				{
 					"properties": {
 						"name": {
-							"type": "string"
+							"$ref": "#/$defs/fieldName",
 						},
 						"type": {
 							"const": "boolean"
 						},
 						"value": {
+							"description": "An optional constant value that the field must always take",
 							"oneOf": [
 								{
 									"type": "boolean"
@@ -257,6 +284,7 @@
 							]
 						},
 						"default": {
+							"description": "The default, placeholder, or starting value for a field that can be changed",
 							"oneOf": [
 								{
 									"type": "boolean"
@@ -269,6 +297,7 @@
 							]
 						},
 						"range": {
+							"description": "An array of exactly two strings defining the labels to show. Defaults to [False, True]",
 							"type": "array",
 							"items": [
 								{
@@ -321,18 +350,21 @@
 				{
 					"properties": {
 						"name": {
-							"type": "string"
+							"$ref": "#/$defs/fieldName",
 						},
 						"type": {
 							"const": "enum"
 						},
 						"value": {
+							"description": "An optional constant value that the field must always take",
 							"type": "string"
 						},
 						"default": {
+							"description": "The default, placeholder, or starting value for a field that can be changed",
 							"type": "string"
 						},
 						"enum": {
+							"description": "An object whose keys are string descriptions of their integer values. Values do not need to be sequential.",
 							"type": "object",
 							"minProperties": 1,
 							"patternProperties": {
