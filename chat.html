@@ -1,236 +1,407 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="UTF-8">
-	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>DmitryChat</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plain Chat</title>
 </head>
-<body>
-	<h1>Dmitry-Chat</h1>
-	<div style="display: flex; flex-direction: column; align-items: center; max-width: 360px; margin-left: auto; margin-right: auto;">
-		<div id="messages-display" style="height: 400px; max-width: 360px; overflow-y: scroll; width: 100%;"></div>
-		<div style="display: flex; justify-content: center;">
-			<span id="chat-id"></span>
-		</div>
-		<div style="display: flex;">
-			<button id="start-chat">Start Chat</button>
-			<button id="end-chat">End Chat</button>
-		</div>
-		<form id="chat-send">
-			<div style="display: flex; justify-content: center;">
-				<textarea disabled id="chat-compose" style="width: 360px; height: 98px;"></textarea>
-			</div>
-			<div style="display: flex; justify-content: flex-end;">
-				<input disabled type="submit" value="Send">
-			</div>
-		</form>
-	</div>
-	<template id="my-message">
-		<div style="display:flex; padding-bottom: 2px; justify-content:flex-end;">
-			<fieldset style="max-width: 280px; border-radius: 4px;">
-				<legend style="font-size: 12px; font-family: Arial, Helvetica, sans-serif">You sent:</legend>
-			</fieldset>
-		</div>
-	</template>
-	<template id="their-message">
-		<div style="display:flex; padding-bottom: 2px; justify-content:flex-start;">
-			<fieldset style="max-width: 280px; border-radius: 4px; background-color: lightblue;">
-				<legend style="font-size: 12px; font-family: Arial, Helvetica, sans-serif; background-color: lightblue; border: 1px solid darkgreen; border-radius: 2px;">They sent:</legend>
-			</fieldset>
-		</div>
-	</template>
-	<script>
-(function() {
-	function getCode (digits = 7) {
-		let code = '';
 
-		[...Array(digits)].forEach(() => {
-			code += `${Math.floor(Math.random() * 10)}`;
-		});
+<style>
+  h1, h3 {
+    margin-top: 8px;
+    margin-bottom: 8px;
+    font-family: Tahoma, Verdana, sans-serif;
+  }
 
-		return `${code.slice(0, 3)}-${code.slice(3)}`;
-	}
+  main {
+    margin-left: auto;
+    margin-right: auto;
+    display: flex;
+    gap: 8px;
+  }
 
-	function updateMessagesDisplay () {
-		messages_display.innerHTML = '';
+  aside {
+    width: 20%;
+  }
 
-		messages.forEach(({ sender, content }) => {
-			const template = document.getElementById(sender === 'ME' ? 'my-message' : 'their-message');
-			const next = template.content.firstElementChild.cloneNode(true);
+  article {
+    width: 60%
+  }
 
-			next.querySelector('fieldset').append(content);
+  kbd {
+    border-radius: 2px;
+    padding: 2px;
+    border: 1px solid black;
+  }
 
-			messages_display.append(next);
-		});
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
 
-		if (incoming_dots) {
-			const next = document.getElementById('their-message').content.firstElementChild.cloneNode(true);
+  .code_entry {
+    margin-bottom: 1rem;
+  }
 
-			next.querySelector('fieldset').append('...');
+  .counters {
+    display: flex;
+    justify-content: space-around;
+  }
 
-			messages_display.append(next);
-		}
+  .message {
+    padding: 8px;
+    border: 1px solid black;
+    border-radius: 4px;
+    margin-top: 8px;
+  }
 
-		messages_display.scrollTop = messages_display.scrollHeight;
-	}
+  .mine {
+    margin-left: 120px;
+  }
 
-	function handleSocketClose() {
-		chat_id_span.innerHTML = '';
-		start_session_button.removeAttribute('disabled');
-		chat_id_span.innerHTML = 'Session closed: Retrying...';
+  .theirs {
+    margin-right: 120px;
+    background-color: lightgray;
+  }
 
-		incoming_message = new EventSource(`https://young-cliffs-72028.herokuapp.com/listener/${listen}`);
+  .chat-req-item {
+    display: flex; 
+    flex-direction: column; 
+    border-top: 1px solid lightgray; 
+    padding-top: 4px; 
+    padding-bottom: 4px;
+  }
 
-		setUpChatInterface();
-		updateMessagesDisplay();
-	}
+  .chat-title {
+    margin-top: 8px;
+    margin-bottom: 8px;
+    display: flex;
+    gap: 16px;
+  }
 
-	function handleSocketMessage (event) {
-		const { type, content } = JSON.parse(event.data);
+  .ul {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
 
-		if (type === 'JOIN_CHAT') {
-			messages.push({ sender: 'NOTIF', message: type });
-		}
+  .help-screen {
+    background-color: white;
+    position: fixed;
+    top: 80px;
+    left: 80px;
+    right: 80px;
+    bottom: 160px;
+    border: 3px outset;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+  }
+</style>
 
-		if (type === 'LEAVE_CHAT') {
-			messages.push({ sender: 'NOTIF', message: type });
-		}
+<body v-scope @vue:mounted="on_mount" style="display: none;">
+  <h1>Plain Chat</h1>
+  <h3>Your Chat Code: {{ your_code }}&nbsp;<button @click="show_help">?</button></h3>
+  <span>Chats on Plain Chat are ephemeral; so is your chat code. Reloading this page will end all your chats and generate a new code.</span>
+  <hr />
 
-		if (content !== '...' || type === 'DOTS_CLEAR') {
-			incoming_dots = false;
-		}
+  <div class="help-screen" v-if="help_visible">
+    <h3>Plain Chat: How it works</h3>
+    <div style="flex-grow: 1;">
+      <p>
+        To communicate with a friend, either give them your code or get theirs through a different method of communication. 
+        The chat initiator has to send a message along with their request. 
+        This will notify the other person that someone has requested a chat with them, and will provide them with your code.
+        Any messages that the initiator writes before the other person accepts the request will not be sent.
+      </p>
+      <p>Your chats are not saved or stored anywhere.</p>
+      <p>This app is very much in Alpha; expect bugs.</p>
+    </div>
+    <div style="text-align: center;">
+      <button @click="hide_help">OK</button>
+    </div>
+  </div>
 
-		if (content === '...') {
-			incoming_dots = true;
-		} else if (content) {
-			messages.push({ sender: 'THEM', content });
-		}
+  <main>
+    <aside>
+      <span v-if="chat_reqs.length"><strong>Chat Requests</strong></span>
+      <div class="ul" v-if="chat_reqs.length">
+        <div v-for="chat_req in chat_reqs" class="chat-req-item">
+          <span><strong>From:</strong> {{ chat_req.their_code }}</span>
+          <span>{{ chat_req.message }}</span>
+          <span>
+            <button @click="accept_chat_request(chat_req.chat_code, chat_req.message, chat_req.their_code)">Accept</button>
+            <button>Decline</button>
+          </span>
+        </div>
+      </div>
+      <span><strong>Chats</strong></span>
+      <div class="ul">
+        <button @click="active_chat = ''">* New Chat</button>
+        <button v-for="chat in chats" @click="active_chat = chat.chat_id, chat_nickname = ''">
+          <div>
+            <span><strong>With:</strong> {{ chat.nickname || chat.their_code }}</span><br>
+            <span v-if="chat.messages[0].sender === 'me'">You:&nbsp</span>
+            <span v-else></span>
+            <span>{{ chat.messages[0].message }}</span>
+          </div>
+        </button>
+      </div>
+    </aside>
+    <article>
+      <div v-if="active_chat">
+        <div class="chat-title">
+          <h3 style="margin: 0;">
+            Chat with {{active_chat_name}}
+          </h3>
+          <input placeholder="Nickname this chat" v-model="chat_nickname" />
+          <button @click="set_chat_nickname">
+            ✏️ Set chat nickname
+          </button>
+          <button @click="end_this_chat">
+            🚫 End this chat
+          </button>
+        </div>
+        <form @submit.prevent="submit_my_message($el)" @keydown.enter="check_for_submit">
+          <textarea v-model="entered_msg" ref="message_input"></textarea>
+          <span>Type <kbd>⌘</kbd> + <kbd>Enter</kbd> or click the button below to send your message</span>
+          <button type="submit" :disabled="!entered_msg">Send</button>
+        </form>
+        <div :class="`message ${msg.sender === 'me' ? 'mine' : 'theirs'}`" v-for="msg in message_hist[active_chat].messages">
+          {{ msg.message }}
+        </div>
+      </div>
+      <div v-else>
+        <div>Start a chat with a friend</div>
+        <div class="code_entry" >
+          <label>Enter your friend's code</label>
+          <input v-model="their_code" />
+        </div>
+        <div>
+          <form @submit.prevent="init_chat_request($el)" @keydown.enter="check_for_init_submit">
+            <textarea v-model="entered_msg" ref="message_input"></textarea>
+            <span>Type <kbd>⌘</kbd> + <kbd>Enter</kbd> or click the button below to send your message</span>
+            <button type="submit" :disabled="!(their_code && entered_msg)">Send</button>
+          </form>
+        </div>
+      </div>
+    </article>
+    <aside />
+  </main>
 
-		updateMessagesDisplay();
-	}
+  <script type="module">
+    import { createApp } from 'https://unpkg.com/petite-vue?module';
 
-	function setUpChatInterface () {
-		let last_input_value = '';
+    const CHARS = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+    const B_SIZE = 8;
+    const C_SIZE = 5;
+    const method = 'post';
+    const headers = { 'Content-Type': 'application/json' };
 
-		incoming_message.onmessage = event => handleSocketMessage(event);
+    function extend(num) {
+      return function (str) {
+        while (str.length < num) {
+          str = `0${str}`;
+        }
 
-		message_send_form.addEventListener('submit', event => {
-			event.preventDefault();
+        return str;
+      };
+    }
 
-			const content = message_entry.value;
+    /**
+     * @param {string} str
+     */
+    function makeCode(str) {
+      const encVals = str.split('').map(char => char.charCodeAt(0));
+      const byteLen = encVals.length * B_SIZE;
+      const overflowBits = byteLen % C_SIZE;
+      let byteIdx = 0;
+      let start = 0;
+      let enc = '';
 
-			if (!content) {
-				alert('Something went wrong');
-			} else {
-				fetch(
-					`https://young-cliffs-72028.herokuapp.com/message/${send_id}`,
-					{ method: 'post', headers, body: JSON.stringify({ content }) }
-				);
+      if (overflowBits) {
+        enc = CHARS[parseInt(extend(8)(encVals[0].toString(2)).slice(0, overflowBits), 2)];
+        start = overflowBits;
+      }
 
-				messages.push({ sender: 'ME', content });
-				message_entry.value = '';
-				message_entry.focus();
-				message_send_button.setAttribute('disabled', 'disabled');
-				updateMessagesDisplay();
-			}
-		});
+      while (byteIdx < encVals.length) {
+        const bStr = extend(16)(((encVals[byteIdx] << 8) + (encVals[byteIdx + 1] || 0)).toString(2));
 
-		message_entry.addEventListener('input', event => {
-			if (event.target.value) {
-				message_send_button.removeAttribute('disabled');
-			} else {
-				message_send_button.setAttribute('disabled', 'disabled');
-			}
-		});
+        enc += CHARS[parseInt(bStr.slice(start, start + C_SIZE), 2)];
 
-		message_entry.removeAttribute('disabled');
+        start += C_SIZE;
 
-		setInterval(() => {
-			if (message_entry.value !== last_input_value) {
-				last_input_value = message_entry.value;
+        if (start >= B_SIZE) {
+          byteIdx += 1;
+          start = start % B_SIZE;
+        }
+      }
 
-				if (!!message_entry.value) {
-					fetch(
-						`https://young-cliffs-72028.herokuapp.com/message/${send_id}`,
-						{ method: 'post', headers, body: JSON.stringify({ content: '...' }) }
-					);
-				} else {
-					fetch(
-						`https://young-cliffs-72028.herokuapp.com/message/${send_id}`,
-						{ method: 'post', headers, body: JSON.stringify({ type: 'DOTS_CLEAR' }) }
-					);
-				}
-			}
-		}, 1000);
-	}
+      return `${enc.slice(3, 6)}-${enc.slice(6, 9)}-${enc.slice(9, 16)}`;
+    }
 
-	async function proposeSession (method_str = 'propose') {
-		start_session_button.setAttribute('disabled', 'disabled');
-		chat_id_span.innerHTML = session_id;
+    function generate_random_code() {
+      const seed = Number(`${Date.now()}`.slice(-5));
+      const generated = (seed * (((seed % 2) + 1) + Math.random()) * 1000000).toString().replace('.', '');
+      
+      return makeCode(generated);
+    }
 
-		try {
-			const id_response = await fetch(
-				`https://young-cliffs-72028.herokuapp.com/${method_str}/${session_id}::${Date.now()}`,
-				{ method: 'get' }
-			);
-			const { send, listen } = await id_response.json();
+    const app_obj = {
+      your_code: generate_random_code(),
+      notif_sock: null,
+      help_visible: false,
+      active_chat: '',
+      active_chat_name: '',
+      entered_msg: '',
+      their_code: '',
+      message_hist: {},
+      chat_socks: {},
+      chat_reqs: [],
+      chat_nickname: '',
+      get chats() {
+        const chats_arr = Object.values(this.message_hist);
 
-			incoming_message = new EventSource(`https://young-cliffs-72028.herokuapp.com/listener/${listen}`);
-			listen_id = listen;
-			send_id = send;
+        if (chats_arr.length) {
+          return chats_arr.sort((a, b) => b.last_update - a.last_update);
+        }
 
-			setUpChatInterface();
-		} catch (err) {
-			chat_id_span.innerHTML = err;
-		}
-	}
+        return [];
+      },
+      get active_chat_name() {
+        if (!this.active_chat) { return ''; }
 
-	function joinChatSession () {
-		const proposed_session = getCode();
-		const join_session = prompt(`
-Your session identifier is ${proposed_session}
-Press "OK" to start this chat.
-Or enter your friend's code:
-			`.trim());
+        return this.message_hist[this.active_chat].nickname || this.message_hist[this.active_chat].their_code;
+      },
+      show_help() {
+        this.help_visible = true;
+      },
+      hide_help() {
+        this.help_visible = false;
+      },
+      normalize_their_code(entry) {
+        const normalized = entry
+          .replace(/[-\s]/g, '')
+          .replace(/[oO]/g, '0')
+          .replace(/[iIlL]/g, '1')
+          .toUpperCase();
 
-		session_id = join_session || proposed_session;
+        return `${normalized.slice(0, 3)}-${normalized.slice(3, 6)}-${normalized.slice(6)}`;
+      },
+      check_for_init_submit(event) {
+        if (event.metaKey) {
+          event.preventDefault();
+          this.init_chat_request(document.getElementsByTagName('form')[0]);
+        }
+      },
+      check_for_submit(event) {
+        if (event.metaKey) {
+          event.preventDefault();
+          this.submit_my_message(document.getElementsByTagName('form')[0]);
+        }
+      },
+      handle_event(dataStr) {
+        if (dataStr === 'ping') { return; }
 
-		proposeSession(join_session ? 'join' : 'propose');
-	}
+        try {
+          const { their_code, chat_code, message } = JSON.parse(dataStr);
 
-	const messages_display = document.getElementById('messages-display');
-	const start_session_button = document.getElementById('start-chat');
-	const end_session_button = document.getElementById('end-chat');
-	const message_entry = document.getElementById('chat-compose');
-	const message_send_form = document.getElementById('chat-send');
-	const message_send_button = message_send_form.querySelector('input[type="submit"]');
-	const chat_id_span = document.getElementById('chat-id');
+          this.chat_reqs.push({ their_code, chat_code, message });
+        } catch (err) {
+          /* noop */
+        }
+      },
+      handle_control(ctrl_obj) {
+        console.log('handling control', ctrl_obj);
+        /* noop */
+      },
+      set_chat_nickname() {
+        this.message_hist[this.active_chat].nickname = this.chat_nickname;
+        this.chat_nickname = '';
+      },
+      create_chat_sock(chat_id) {
+        const chat_sock = new WebSocket(`wss://topaz-overjoyed-motion.glitch.me/chat?c=${chat_id}&m=${this.your_code}`);
 
-	const headers = { 'Content-Type': 'application/json' };
-	const messages = [];
+        chat_sock.onmessage = (ev) => {
+          const rec_msg = JSON.parse(ev.data);
 
-	/**
-	 * @type {EventSource}
-	 */
-	let incoming_message;
-	/**
-	 * @type {string}
-	 */
-	let session_id;
-	let send_id;
-	let listen_id;
-	let incoming_dots = false;
-	let session_close_intent = false;
+          if (rec_msg.message) {
+            this.update_chats(chat_id, { message: rec_msg.message, sender: 'them' });
+          } else {
+            this.handle_control(rec_msg);
+          }
+        };
 
-	start_session_button.addEventListener('click', joinChatSession);
-	end_session_button.addEventListener('click', () => {
-		session_close_intent = true;
-		incoming_message.close();
-		messages.splice(0, messages.length);
-		updateMessagesDisplay();
-	});
-})();
-	</script>
+        return chat_sock;
+      },
+      init_chat_request($form) {
+        const their_normalized_code = this.normalize_their_code(this.their_code);
+        const init_body = { 
+          my_code: this.your_code, 
+          their_code: their_normalized_code,
+          message: this.entered_msg, 
+        };
+        
+        $form.getElementsByTagName('button')[0].setAttribute('disabled', true);
+
+        fetch('https://topaz-overjoyed-motion.glitch.me/chat', { method, headers, body: JSON.stringify(init_body) })
+          .then(res => res.json())
+          .then(({ chat }) => {
+            if (chat) {
+              this.update_chats(chat, { sender: 'me', message: this.entered_msg }, their_normalized_code);
+              this.active_chat = chat;
+            }
+
+            this.entered_msg = '';
+            this.their_code = '';
+            this.chat_nickname = '';
+          })
+          .catch(err => {
+            console.log(err);
+          });
+      },
+      accept_chat_request(chat_id, message, from) {
+        this.update_chats(chat_id, { message, sender: 'them' }, from);
+        this.chat_reqs = this.chat_reqs.filter(x => x.chat_code !== chat_id);
+        this.active_chat = chat_id;
+      },
+      submit_my_message($form) {
+        this.update_chats(this.active_chat, { message: this.entered_msg, sender: 'me' });
+        this.chat_socks[this.active_chat].send(this.entered_msg);
+        this.entered_msg = '';
+        $form.getElementsByTagName('textarea')[0].focus();
+      },
+      update_chats(chat_id, message_obj, their_code) {
+        if (this.message_hist[chat_id]) {
+          this.message_hist[chat_id].last_update = Date.now();
+          this.message_hist[chat_id].messages.unshift({ ...message_obj, timestamp: Date.now() });
+        } else {
+          this.chat_socks[chat_id] = this.create_chat_sock(chat_id);
+
+          this.message_hist[chat_id] = {
+            last_update: Date.now(),
+            messages: [{ ...message_obj, timestamp: Date.now() }],
+            their_code,
+            chat_id,
+          };
+        }
+      },
+      end_this_chat() {
+        this.chat_socks[this.active_chat].close();
+        delete this.message_hist[this.active_chat];
+        this.active_chat = '';
+      },
+      on_mount() {
+        document.getElementsByTagName('body')[0].removeAttribute('style');
+        this.notif_sock = new EventSource(`https://topaz-overjoyed-motion.glitch.me/my-code/${this.your_code}`);
+        this.notif_sock.addEventListener('message', ({ data }) => {
+          this.handle_event(data);
+        });
+      },
+    };
+
+    createApp(app_obj).mount();
+  </script>
 </body>
 </html>
