@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Silverton Ordinance 24-15</title>
     <style>
-        body { margin-left: 6rem; margin-right: 6rem; margin-bottom: 12rem; }
+        body { padding-left: 1rem; padding-right: 1rem; margin-bottom: 12rem; }
+        #container { max-width: 900px; margin-left: auto; margin-right: auto; }
         li { margin-bottom: 0.5rem; }
         article#copytext {
             margin: 3rem;
@@ -16,7 +17,7 @@
         }
     </style>
 </head>
-<body>
+<body><div id="container">
     <h1>Opinions about Silverton's proposed Ordinance 24-15</h1>
 
     <p>Here is some information and opinions about the City of Silverton, Oregon's proposed update to its Camping Ordinance</p>
@@ -79,7 +80,7 @@
         If you would rather open the contact forms for each councillor one at a time, you can use the links below:
     </p>
 
-    <p id="ind-btns" style="display: flex; justify-content: space-around;"></p>
+    <p id="ind-btns" style="display: flex; justify-content: space-around; flex-wrap: wrap;"></p>
 
     <script type="text/javascript">
         const lettertext = `Dear Silverton City Councillor,
@@ -120,6 +121,7 @@ Sincerely,`;
             A.href = `https://www.silverton.or.us/email-contact/node/${node}/field_email/directory_listings_body_with_photo`;
             A.target = '_blank';
             A.innerHTML = council_names[idx];
+            A.style.lineHeight = '56px';
 
             indivBtnsP.appendChild(A);
         });
@@ -140,5 +142,5 @@ Sincerely,`;
             });
         });
     </script>
-</body>
+</div></body>
 </html>
